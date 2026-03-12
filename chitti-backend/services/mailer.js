@@ -9,7 +9,7 @@ const Mailer = async ({ name, otp, email }) => {
     try {
         const { data, error } = await resend.emails.send({
             from: 'Chitti App <onboarding@resend.dev>',
-            to: email,
+            to: process.env.NODE_ENV === 'production' ? process.env.RESEND_FROM_EMAIL : email,
             subject: 'Verify your Chitti Account',
             html: OTPTemplate({ name, otp }),
         });
