@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const authController = require('./../controllers/authController');
-const userController = require('./../controllers/UserController');
+const userController = require('./../controllers/userController');
 
 router.use(authController.protect);
 
