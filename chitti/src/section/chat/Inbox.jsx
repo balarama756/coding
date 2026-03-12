@@ -101,13 +101,6 @@ export default function Inbox() {
             message,
         });
 
-        // Optimistically add message to UI
-        dispatch(addMessage({ ...message, createdAt: new Date().toISOString() }));
-        dispatch(updateConversationLastMessage({
-            conversationId: activeConversation._id,
-            message: { ...message, createdAt: new Date().toISOString() },
-        }));
-
         setInputValue('');
         handleStopTyping();
     };
