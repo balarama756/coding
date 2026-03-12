@@ -213,6 +213,13 @@ exports.login = catchAsync(async (req, res, next) => {
         });
     }
 
+    if (!user.verified) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Email not verified. Please verify your account first.',
+        });
+    }
+
     const token = signToken(user._id);
 
     res.status(200).json({

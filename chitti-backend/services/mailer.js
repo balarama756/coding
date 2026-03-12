@@ -13,10 +13,9 @@ console.log(NODEMAILER_APP_PASSWORD, NODEMAILER_USER)
 //Create a transport using your email services
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.google.com',
+    host: 'smtp.gmail.com',
     port: 465,
     secure: true,
-    service: 'gmail',
     auth: {
         user: NODEMAILER_USER,
         pass: NODEMAILER_APP_PASSWORD,
