@@ -148,16 +148,19 @@ exports.startConversation = catchAsync(async (req, res, next) => {
 exports.getConversations = catchAsync(async (req, res, next) => {
     const { _id } = req.user;
 
-    // Find all Conversations where the current logged in user is a participants
-    const conversation = await Conversation.find({
+    const conversations = await Conversation.find({
         participants: { $in: [_id] },
     }).populate('messages').populate('participants');
 
-    //  send the list of converstaions as a response
+    // Filter out conversations where a participant was deleted (populate returns null)
+    const validConversations = conversations.filter(
+        (c) => c.participants.every((p) => p !== null)
+    );
+
     res.status(200).json({
         status: 'success',
         data: {
-            conversation,
+            conversation: validConversations,
         }
     })
 })

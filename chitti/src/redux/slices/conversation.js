@@ -24,6 +24,21 @@ const conversationSlice = createSlice({
                 state.conversations.unshift(action.payload);
             }
         },
+        updateParticipantStatus(state, action) {
+            const { userId, status } = action.payload;
+            // Update in conversations list
+            state.conversations.forEach(conv => {
+                conv.participants.forEach(p => {
+                    if (p._id === userId) p.status = status;
+                });
+            });
+            // Update in active conversation
+            if (state.activeConversation) {
+                state.activeConversation.participants.forEach(p => {
+                    if (p._id === userId) p.status = status;
+                });
+            }
+        },
         updateConversationLastMessage(state, action) {
             const { conversationId, message } = action.payload;
             const conversation = state.conversations.find(c => c._id === conversationId);
@@ -52,6 +67,7 @@ export const {
     setActiveConversation,
     addConversation,
     updateConversationLastMessage,
+    updateParticipantStatus,
     setLoading,
     setError,
 } = conversationSlice.actions;

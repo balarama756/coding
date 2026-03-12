@@ -2,7 +2,7 @@ import { MagnifyingGlass, PencilSimple, X } from '@phosphor-icons/react'
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { getConversations, getUsers, startConversation } from '../../utils/api'
-import { setConversations, setActiveConversation, addConversation } from '../../redux/slices/conversation'
+import { setConversations, setActiveConversation, addConversation, updateParticipantStatus } from '../../redux/slices/conversation'
 import { clearMessages } from '../../redux/slices/message'
 import { getSocket } from '../../utils/socket'
 
@@ -17,6 +17,24 @@ export default function ChatList() {
 
   useEffect(() => {
     fetchConversations();
+
+    // Listen to online/offline status updates
+    const socket = getSocket();
+    if (socket) {
+      socket.on('user-connected', (data) => {
+        dispatch(updateParticipantStatus({ userId: data.userId, status: 'Online' }));
+      });
+      socket.on('user-disconnected', (data) => {
+        dispatch(updateParticipantStatus({ userId: data.userId, status: 'Offline' }));
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off('user-connected');
+        socket.off('user-disconnected');
+      }
+    };
   }, []);
 
   const fetchConversations = async () => {
