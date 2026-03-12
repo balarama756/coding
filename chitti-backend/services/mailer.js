@@ -2,10 +2,14 @@ const nodemailer = require('nodemailer');
 const OTPTemplate = require('../Template/OTP');
 
 const Mailer = async ({ name, otp, email }) => {
+    console.log('Mailer called for:', email);
+    console.log('Using email account:', process.env.NODEMAILER_USER);
+    console.log('App password set:', !!process.env.NODEMAILER_APP_PASSWORD);
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false,
         auth: {
             user: process.env.NODEMAILER_USER,
             pass: process.env.NODEMAILER_APP_PASSWORD,
