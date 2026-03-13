@@ -30,10 +30,10 @@ export default function Login() {
         }
     })
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         console.log(data, 'From Data: Login');
 
-        dispatch(LoginUser(data, navigate));
+        await dispatch(LoginUser(data, navigate));
     };
 
     return (

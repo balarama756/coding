@@ -20,7 +20,7 @@ const schema = yup.object().shape({
 export default function Signup() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    
+
     const { isLoading } = useSelector((state) => state.auth);
 
     const {
@@ -32,14 +32,14 @@ export default function Signup() {
         defaultValues: {
             name: '',
             email: '',
-            password: '', 
+            password: '',
             confirmPassword: ''
         },
     });
 
-    const onSubmit = (data) => {
+    const onSubmit = async (data) => {
         console.log(data, 'Form Data: Signup');
-        dispatch(RegisterUser(data, navigate));
+        await dispatch(RegisterUser(data, navigate));
     };
 
 
