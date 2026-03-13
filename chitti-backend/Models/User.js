@@ -57,9 +57,9 @@ const userSchema = new mongoose.Schema(
             enum: ['Online', 'Offline'],
             default: 'Offline',
         },
-        socketId: {
-            type: String,
-        },
+        socketId: { type: String },
+        lastSeen: { type: Date },
+        blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     },
     {
         timestamps: true,

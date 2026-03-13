@@ -17,6 +17,11 @@ const documentScheme = new Schema({
     size: {type: Number }, 
 });
 
+const reactionSchema = new Schema({
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
+    emoji: { type: String },
+}, { _id: false });
+
 const messageSchema = new Schema({
     author: {
         type: Schema.Types.ObjectId,
@@ -32,23 +37,24 @@ const messageSchema = new Schema({
                 type: String,
                 enum: ['image', 'video'],
             },
-            url: {
-                type: String,
-
-            }
+            url: { type: String }
         }
     ],
-    audioUrl: {
-        type: String,
-    },
-    giphyUrl: {
-        type: String,
-    },
+    audioUrl: { type: String },
+    giphyUrl: { type: String },
     type: {
         type: String,
         enum: ['Media', 'Text', 'Document', 'Giphy', 'Audio'],
     },
     document: documentScheme,
+    // Read receipts
+    seenBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    // Reactions
+    reactions: [reactionSchema],
+    // Reply to message
+    replyTo: { type: Schema.Types.ObjectId, ref: 'Message', default: null },
+    // Soft delete
+    deletedFor: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 }, {
     timestamps: true,
 });

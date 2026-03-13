@@ -10,7 +10,7 @@ const chatHistoryHandler = async (Socket, data) => {
 
         // Find the conversation by ID and populate the message
 
-        const conversation = await Conversation.findById(conversationId).select('messages').populate('messages');
+        const conversation = await Conversation.findById(conversationId).select('messages').populate({ path: 'messages', populate: { path: 'replyTo', select: 'content author' } });
 
         if(!conversation) {
             return Socket.emit('error', {message: 'Conversation not found'});

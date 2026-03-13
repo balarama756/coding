@@ -7,7 +7,7 @@ const disconnectHandler = async (socket) => {
     // Update user document: Set socketId to undefined and status to offline
     const user = await User.findOneAndUpdate(
         { socketId: socket.id },
-        { socketId: undefined, status: 'Offline' },
+        { socketId: undefined, status: 'Offline', lastSeen: new Date() },
         { new: true, validateModifiedOnly: true }
     );
 

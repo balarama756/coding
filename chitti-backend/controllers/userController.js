@@ -152,15 +152,90 @@ exports.getConversations = catchAsync(async (req, res, next) => {
         participants: { $in: [_id] },
     }).populate('messages').populate('participants');
 
-    // Filter out conversations where a participant was deleted (populate returns null)
     const validConversations = conversations.filter(
         (c) => c.participants.every((p) => p !== null)
     );
 
     res.status(200).json({
         status: 'success',
-        data: {
-            conversation: validConversations,
-        }
+        data: { conversation: validConversations },
     })
-})
+});
+
+// CREATE GROUP
+exports.createGroup = catchAsync(async (req, res, next) => {
+    const { groupName, participants } = req.body;
+    const { _id } = req.user;
+
+    const allParticipants = [...new Set([...participants, _id.toString()])];
+
+    let newConversation = await Conversation.create({
+        participants: allParticipants,
+        isGroup: true,
+        groupName,
+        groupAdmin: _id,
+    });
+
+    newConversation = await Conversation.findById(newConversation._id).populate('messages').populate('participants');
+
+    res.status(201).json({
+        status: 'success',
+        data: { conversation: newConversation },
+    });
+});
+
+// BLOCK USER
+exports.blockUser = catchAsync(async (req, res, next) => {
+    const { userId } = req.body;
+    const { _id } = req.user;
+
+    await User.findByIdAndUpdate(_id, { $addToSet: { blockedUsers: userId } });
+
+    res.status(200).json({ status: 'success', message: 'User blocked' });
+});
+
+// UNBLOCK USER
+exports.unblockUser = catchAsync(async (req, res, next) => {
+    const { userId } = req.body;
+    const { _id } = req.user;
+
+    await User.findByIdAndUpdate(_id, { $pull: { blockedUsers: userId } });
+
+    res.status(200).json({ status: 'success', message: 'User unblocked' });
+});
+
+// SEARCH MESSAGES
+exports.searchMessages = catchAsync(async (req, res, next) => {
+    const { q, conversationId } = req.query;
+    if (!q) return res.status(400).json({ status: 'error', message: 'Query required' });
+
+    const conversation = await Conversation.findById(conversationId).select('messages');
+    if (!conversation) return res.status(404).json({ status: 'error', message: 'Conversation not found' });
+
+    const Message = require('../Models/Message');
+    const results = await Message.find({
+        _id: { $in: conversation.messages },
+        content: { $regex: q, $options: 'i' },
+    });
+
+    res.status(200).json({ status: 'success', data: { messages: results } });
+});
+
+// GET UNREAD COUNT
+exports.getUnreadCount = catchAsync(async (req, res, next) => {
+    const { _id } = req.user;
+    const Message = require('../Models/Message');
+
+    const conversations = await Conversation.find({ participants: { $in: [_id] } }).select('messages lastReadAt');
+
+    const unreadCounts = {};
+    for (const conv of conversations) {
+        const lastRead = conv.lastReadAt?.get(_id.toString());
+        const query = { _id: { $in: conv.messages }, author: { $ne: _id }, seenBy: { $ne: _id } };
+        if (lastRead) query.createdAt = { $gt: lastRead };
+        const count = await Message.countDocuments(query);
+        if (count > 0) unreadCounts[conv._id] = count;
+    }
+
+    res.status(200).json({ status: 'success', data: { unreadCounts } });
+});

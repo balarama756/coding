@@ -1,31 +1,33 @@
-import { MagnifyingGlass, PencilSimple, X } from '@phosphor-icons/react'
+import { MagnifyingGlass, PencilSimple, X, UsersThree } from '@phosphor-icons/react'
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { getConversations, getUsers, startConversation } from '../../utils/api'
-import { setConversations, setActiveConversation, addConversation, updateParticipantStatus } from '../../redux/slices/conversation'
+import { getConversations, getUsers, startConversation, getUnreadCount } from '../../utils/api'
+import { setConversations, setActiveConversation, addConversation, updateParticipantStatus, setUnreadCounts } from '../../redux/slices/conversation'
 import { clearMessages } from '../../redux/slices/message'
 import { getSocket } from '../../utils/socket'
+import GroupModal from '../../components/GroupModal'
 
 export default function ChatList() {
   const dispatch = useDispatch();
-  const { conversations, activeConversation } = useSelector((state) => state.conversation);
+  const { conversations, activeConversation, unreadCounts } = useSelector((state) => state.conversation);
   const { user } = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserList, setShowUserList] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [userSearch, setUserSearch] = useState('');
 
   useEffect(() => {
     fetchConversations();
+    fetchUnreadCounts();
 
-    // Listen to online/offline status updates
     const socket = getSocket();
     if (socket) {
       socket.on('user-connected', (data) => {
         dispatch(updateParticipantStatus({ userId: data.userId, status: 'Online' }));
       });
       socket.on('user-disconnected', (data) => {
-        dispatch(updateParticipantStatus({ userId: data.userId, status: 'Offline' }));
+        dispatch(updateParticipantStatus({ userId: data.userId, status: 'Offline', lastSeen: new Date().toISOString() }));
       });
     }
 
@@ -36,6 +38,15 @@ export default function ChatList() {
       }
     };
   }, []);
+
+  const fetchUnreadCounts = async () => {
+    try {
+      const res = await getUnreadCount();
+      dispatch(setUnreadCounts(res.data.unreadCounts || {}));
+    } catch (err) {
+      console.error('Error fetching unread counts:', err);
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -88,7 +99,20 @@ export default function ChatList() {
   };
 
   const getOtherParticipant = (conversation) => {
+    if (conversation.isGroup) return null;
     return conversation.participants.find(p => p._id !== user?._id);
+  };
+
+  const getConvName = (conversation) => {
+    if (conversation.isGroup) return conversation.groupName;
+    return getOtherParticipant(conversation)?.name || 'Unknown';
+  };
+
+  const getConvAvatar = (conversation) => {
+    if (conversation.isGroup)
+      return conversation.groupAvatar || `https://ui-avatars.com/api/?name=${conversation.groupName}&background=6366f1&color=fff`;
+    const other = getOtherParticipant(conversation);
+    return other?.avatar || `https://ui-avatars.com/api/?name=${other?.name}`;
   };
 
   const getLastMessage = (conversation) => {
@@ -104,8 +128,8 @@ export default function ChatList() {
   };
 
   const filteredConversations = conversations.filter(conv => {
-    const otherUser = getOtherParticipant(conv);
-    return otherUser?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const name = conv.isGroup ? conv.groupName : getOtherParticipant(conv)?.name;
+    return name?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const filteredUsers = users.filter(u =>
@@ -130,6 +154,13 @@ export default function ChatList() {
           title='New Conversation'
         >
           <PencilSimple size={22} />
+        </button>
+        <button
+          onClick={() => setShowGroupModal(true)}
+          className='hover:text-primary'
+          title='New Group'
+        >
+          <UsersThree size={22} />
         </button>
       </div>
 
@@ -161,6 +192,7 @@ export default function ChatList() {
             filteredConversations.map((conversation) => {
               const otherUser = getOtherParticipant(conversation);
               const isActive = activeConversation?._id === conversation._id;
+              const unread = unreadCounts[conversation._id];
 
               return (
                 <div
@@ -170,18 +202,25 @@ export default function ChatList() {
                 >
                   <div className='relative mr-3.5 h-11 w-full max-w-11 rounded-full'>
                     <img
-                      src={otherUser?.avatar || `https://ui-avatars.com/api/?name=${otherUser?.name}`}
+                      src={getConvAvatar(conversation)}
                       alt='profile'
                       className='h-full w-full rounded-full object-cover object-center'
                     />
-                    {otherUser?.status === 'Online' && (
+                    {!conversation.isGroup && otherUser?.status === 'Online' && (
                       <span className='absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-gray-2 bg-success'></span>
                     )}
                   </div>
                   <div className='w-full overflow-hidden'>
-                    <h5 className='text-sm font-medium text-black dark:text-white'>
-                      {otherUser?.name || 'Unknown User'}
-                    </h5>
+                    <div className='flex items-center justify-between'>
+                      <h5 className='text-sm font-medium text-black dark:text-white'>
+                        {getConvName(conversation)}
+                      </h5>
+                      {unread > 0 && (
+                        <span className='ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white font-bold'>
+                          {unread > 9 ? '9+' : unread}
+                        </span>
+                      )}
+                    </div>
                     <p className='text-sm truncate'>{getLastMessage(conversation)}</p>
                   </div>
                 </div>
@@ -236,6 +275,8 @@ export default function ChatList() {
           </div>
         </div>
       )}
+
+      {showGroupModal && <GroupModal onClose={() => setShowGroupModal(false)} />}
     </div>
   );
 }

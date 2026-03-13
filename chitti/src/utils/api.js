@@ -45,3 +45,28 @@ export const getConversations = async () => {
     const response = await axiosInstance.get('/user/conversations');
     return response.data;
 };
+
+export const createGroup = async (groupName, participants) => {
+    const response = await axiosInstance.post('/user/group', { groupName, participants });
+    return response.data;
+};
+
+export const blockUser = async (userId) => {
+    const response = await axiosInstance.post('/user/block', { userId });
+    return response.data;
+};
+
+export const unblockUser = async (userId) => {
+    const response = await axiosInstance.post('/user/unblock', { userId });
+    return response.data;
+};
+
+export const searchMessages = async (conversationId, q) => {
+    const response = await axiosInstance.get(`/user/search-messages?conversationId=${conversationId}&q=${encodeURIComponent(q)}`);
+    return response.data;
+};
+
+export const getUnreadCount = async () => {
+    const response = await axiosInstance.get('/user/unread-count');
+    return response.data;
+};

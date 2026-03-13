@@ -6,7 +6,7 @@ const newMessageHandler = async (socket, data, io) => {
 
     const { message, conversationId } = data;
 
-    const { author, content, media, audioUrl, document, type, giphyUrl } = message;
+    const { author, content, media, audioUrl, document, type, giphyUrl, replyTo } = message;
 
     try {
         //  1. Find the conversationId
@@ -18,28 +18,31 @@ const newMessageHandler = async (socket, data, io) => {
 
         // 2. Create a new Message using the Message Model
         const newMessage = await Message.create({
-            author, content, media, audioUrl, document, type, giphyUrl
+            author, content, media, audioUrl, document, type, giphyUrl, replyTo: replyTo || null
         });
 
         // 3. Push the messageId to mesaages array in conversation
         conversation.messages.push(newMessage._id);
         await conversation.save();
 
-        // 4. Populate the conversation with messages and participants
-        const updatedConversation = await Conversation.findById(conversationId).populate('messages').populate('participants');
+        // 4. Populate replyTo on the new message before emitting
+        const populatedMessage = await Message.findById(newMessage._id).populate({ path: 'replyTo', select: 'content author' });
 
-        //5. Find the participants who are online (status === 'Online') and have a socketId
+        // 5. Populate the conversation with participants to find online users
+        const updatedConversation = await Conversation.findById(conversationId).populate('participants');
+
+        //6. Find the participants who are online (status === 'Online') and have a socketId
         const onlineParticipants = updatedConversation.participants.filter(
             (participant) => participant.status === 'Online' && participant.socketId 
-    );
+        );
         console.log(onlineParticipants);
 
-        //6. Emit 'new-messagge' event to online participants
+        //7. Emit 'new-direct-message' event to online participants
         onlineParticipants.forEach((participant) => {
             console.log(participant.socketId);
             io.to(participant.socketId).emit('new-direct-message', {
                conversationId: conversationId,
-               message: newMessage,
+               message: populatedMessage,
             })
         });
     }

@@ -5,6 +5,11 @@ const newConnectionHandler = require('./socketHandlers/newConnectionHandler');
 const newMessageHandler = require('./socketHandlers/newMessageHandler');
 const startTypingHandler = require('./socketHandlers/startTypingHandler');
 const stopTypingHandler = require('./socketHandlers/stopTypingHandler');
+const markSeenHandler = require('./socketHandlers/markSeenHandler');
+const reactToMessageHandler = require('./socketHandlers/reactToMessageHandler');
+const deleteMessageHandler = require('./socketHandlers/deleteMessageHandler');
+const forwardMessageHandler = require('./socketHandlers/forwardMessageHandler');
+const pinMessageHandler = require('./socketHandlers/pinMessageHandler');
 
 const registerSocketServer = (server) => {
     const io = require('socket.io')(server, {
@@ -22,31 +27,37 @@ const registerSocketServer = (server) => {
         console.log('user connected');
         console.log(socket.id);
 
-        // ** DONE => newConnectionHandler
-        newConnectionHandler(socket, io)
+        newConnectionHandler(socket, io);
 
-
-        // ** DONE => disconnectHandler
-        socket.on('disconnect', () =>{
-           disconnectHandler(socket); 
+        socket.on('disconnect', () => {
+            disconnectHandler(socket);
         });
-        // **DONE => newMessageHandler 
         socket.on('new-message', (data) => {
-          newMessageHandler(socket, data, io)  
+            newMessageHandler(socket, data, io);
         });
-        // **DONE => chatHistoryHandler
         socket.on('direct-chat-history', (data) => {
-         chatHistoryHandler(socket, data);
+            chatHistoryHandler(socket, data);
         });
-
-        // ** DONE => startTypingHandler
         socket.on('start-typing', (data) => {
-          startTypingHandler(socket, data, io)
+            startTypingHandler(socket, data, io);
         });
-
-        // **DONE => stopTypingHandler
         socket.on('stop-typing', (data) => {
-          stopTypingHandler(socket, data, io)
+            stopTypingHandler(socket, data, io);
+        });
+        socket.on('mark-seen', (data) => {
+            markSeenHandler(socket, data, io);
+        });
+        socket.on('react-message', (data) => {
+            reactToMessageHandler(socket, data, io);
+        });
+        socket.on('delete-message', (data) => {
+            deleteMessageHandler(socket, data, io);
+        });
+        socket.on('forward-message', (data) => {
+            forwardMessageHandler(socket, data, io);
+        });
+        socket.on('pin-message', (data) => {
+            pinMessageHandler(socket, data, io);
         });
     });
 };
