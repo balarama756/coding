@@ -12,7 +12,8 @@ const rootPersistConfig = {
     key: 'root',
     storage,
     keyPrefix: 'redux-',
-    blacklist: ['auth'], // auth has its own persist config
+    version: 2,
+    blacklist: ['auth', 'conversation', 'message'],
 };
 
 // Separate persist config for auth — exclude transient states

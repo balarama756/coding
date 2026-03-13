@@ -9,7 +9,7 @@ import GroupModal from '../../components/GroupModal'
 
 export default function ChatList() {
   const dispatch = useDispatch();
-  const { conversations, activeConversation, unreadCounts } = useSelector((state) => state.conversation);
+  const { conversations, activeConversation, unreadCounts = {} } = useSelector((state) => state.conversation);
   const { user } = useSelector((state) => state.auth);
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserList, setShowUserList] = useState(false);
