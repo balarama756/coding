@@ -137,7 +137,7 @@ export default function ChatList() {
   );
 
   return (
-    <div className='hidden h-full flex-col xl:flex xl:w-1/4'>
+    <div className='flex h-full flex-col w-full border-r border-stroke dark:border-strokedark'>
       {/* Header */}
       <div className='sticky border-b border-stroke dark:border-strokedark px-6 py-7.5 flex flex-row items-center justify-between'>
         <div className='flex items-center gap-2'>

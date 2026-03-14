@@ -1,7 +1,7 @@
 import { Chat, ChatTeardropText, SignOut, UserCircle } from '@phosphor-icons/react';
 import React, { useState } from 'react';
 import DarkModeSwitcher from '../components/DarkModeSwitcher';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { LogoutUser } from '../redux/slices/auth';
 
@@ -24,6 +24,7 @@ const NAVIGATION = [
 
 export default function Sidebar() {
 
+    const location = useLocation();
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [selected, setSelected] = useState(0);
@@ -34,7 +35,9 @@ export default function Sidebar() {
 
     }
     return (
-        <div className='flex flex-col border-r border-stroke p-2 dark:border-strokedark'>
+        <>
+        {/* Desktop sidebar */}
+        <div className='hidden sm:flex flex-col border-r border-stroke p-2 dark:border-strokedark'>
 
 
             <div className='flex flex-col items-center space-y-5'>
@@ -69,5 +72,29 @@ export default function Sidebar() {
 
             </div>
         </div>
+
+        {/* Mobile bottom nav */}
+        <div className='sm:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-stroke bg-white dark:bg-boxdark dark:border-strokedark px-4 py-2'>
+            {NAVIGATION.map(({ icon, key, title, path }) => (
+                <button
+                    key={key}
+                    onClick={() => { navigate(path); setSelected(key); }}
+                    className={`flex flex-col items-center gap-0.5 text-xs ${
+                        selected === key ? 'text-primary' : 'text-gray-500'
+                    }`}
+                >
+                    {icon}
+                    <span>{title}</span>
+                </button>
+            ))}
+            <button
+                onClick={() => dispatch(LogoutUser(navigate))}
+                className='flex flex-col items-center gap-0.5 text-xs text-gray-500'
+            >
+                <SignOut size={24} />
+                <span>Logout</span>
+            </button>
+        </div>
+        </>
     )
 }

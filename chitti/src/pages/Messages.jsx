@@ -1,60 +1,31 @@
-// import React from 'react'
-// import { ChatList, MessageInbox, Sidebar } from '../section/chat'
-// import GifModal from '../components/GifModal'
-// import VoiceRecorder from '../components/VoiceRecorder'
-// import MediaPicker from '../components/MediaPicker'
-// import DocumentPicker from '../components/DocumentPicker'
-
-// export default function Messages() {
-//   return (
-//     <div className='h-screen overflow-hidden'>
-//       <div className='h-full rounded-sm border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark xl:flex'>
-//         {/* sidebar */}
-//         <Sidebar />
-//         {/* Chatlist */}
-//         <ChatList />
-
-//         {/* Inbox */}
-//         <MessageInbox />
-//       </div>
-
-//     <GifModal />
-//     <VoiceRecorder />
-//     <MediaPicker />
-//     <DocumentPicker />
-//     </div>
-//   )
-// }
-
 import React from 'react'
-import { ChatList, MessageInbox} from '../section/chat'
-
-import GifModal from '../components/GifModal' 
+import { ChatList, MessageInbox } from '../section/chat'
+import GifModal from '../components/GifModal'
 import VoiceRecorder from '../components/VoiceRecorder'
 import MediaPicker from '../components/MediaPicker'
 import DocumentPicker from '../components/DocumentPicker'
-
+import { useSelector } from 'react-redux'
 
 export default function Messages() {
+  const { activeConversation } = useSelector((state) => state.conversation);
+
   return (
     <>
-      <div className='flex w-full '>
-        {/* ChatList */}
-        <ChatList />
+      <div className='flex w-full h-full overflow-hidden'>
+        {/* On mobile: show ChatList only when no active conversation, Inbox only when active */}
+        <div className={`${activeConversation ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 xl:w-96 flex-shrink-0 h-full`}>
+          <ChatList />
+        </div>
 
-
-        {/* Inbox */}
-        <MessageInbox />
-
+        <div className={`${activeConversation ? 'flex' : 'hidden sm:flex'} flex-1 min-w-0 h-full bg-white dark:bg-boxdark relative`}>
+          <MessageInbox />
+        </div>
       </div>
 
       <GifModal />
       <VoiceRecorder />
       <MediaPicker />
       <DocumentPicker />
-
-
     </>
   )
 }
-

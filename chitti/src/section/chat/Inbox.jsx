@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Gif, Microphone, PaperPlaneTilt, Phone, VideoCamera, MagnifyingGlass, PushPin, X } from '@phosphor-icons/react';
+import { Gif, Microphone, PaperPlaneTilt, Phone, VideoCamera, MagnifyingGlass, PushPin, X, ArrowLeft } from '@phosphor-icons/react';
 import Dropdown from '../../components/Dropdown';
 import EmojiPicker from '../../components/EmojiPicker';
 import UserInfo from './UserInfo';
@@ -14,7 +14,7 @@ import VideoRoom from '../../components/VideoRoom';
 import AudioRoom from '../../components/AudioRoom';
 import { getSocket } from '../../utils/socket';
 import { addMessage, setMessages, setTyping, updateMessageSeen, updateMessageReaction, deleteMessage, setPinnedMessages } from '../../redux/slices/message';
-import { updateConversationLastMessage, incrementUnread } from '../../redux/slices/conversation';
+import { updateConversationLastMessage, incrementUnread, setActiveConversation } from '../../redux/slices/conversation';
 import { searchMessages } from '../../utils/api';
 
 export default function Inbox() {
@@ -238,7 +238,7 @@ export default function Inbox() {
 
     if (!activeConversation) {
         return (
-            <div className='flex h-full flex-col items-center justify-center border-l border-stroke dark:border-strokedark xl:w-3/4'>
+            <div className='flex h-full w-full flex-col items-center justify-center border-l border-stroke dark:border-strokedark bg-gray-50 dark:bg-boxdark-2'>
                 <p className='text-gray-400 text-lg'>Select a conversation to start chatting</p>
             </div>
         );
@@ -246,9 +246,14 @@ export default function Inbox() {
 
     return (
         <>
-            <div className={`flex h-full flex-col border-l border-stroke dark:border-strokedark ${userInfoOpen ? 'xl:w-1/2' : 'xl:w-3/4'}`}>
+            <div className='flex h-full flex-col flex-1 min-w-0 border-l border-stroke dark:border-strokedark'>
                 {/* Header */}
                 <div className='sticky flex items-center flex-row justify-between border-b border-stroke dark:border-strokedark px-6 py-4.5'>
+                    <div className='flex items-center gap-2'>
+                        {/* Back button - mobile only */}
+                        <button className='sm:hidden mr-1' onClick={() => dispatch(setActiveConversation(null))}>
+                            <ArrowLeft size={22} />
+                        </button>
                     <div className='flex items-center cursor-pointer' onClick={() => setUserInfoOpen(p => !p)}>
                         <div className='mr-4.5 h-13 w-full max-w-13 overflow-hidden rounded-full'>
                             <img src={getDisplayAvatar()} alt='avatar' className='h-full w-full object-cover object-center' />
@@ -257,6 +262,7 @@ export default function Inbox() {
                             <h5 className='font-medium text-black dark:text-white'>{getDisplayName()}</h5>
                             <p className='text-sm'>{getStatusLine()}</p>
                         </div>
+                    </div>
                     </div>
 
                     <div className='flex flex-row items-center space-x-4'>
@@ -409,7 +415,7 @@ export default function Inbox() {
             {videoCall && <VideoRoom open={videoCall} handleClose={() => setVideoCall(false)} />}
             {audioCall && <AudioRoom open={audioCall} handleClose={() => setAudioCall(false)} />}
             {userInfoOpen && (
-                <div className='w-1/4'>
+                <div className='absolute right-0 top-0 bottom-0 z-50 w-full sm:w-80 bg-white dark:bg-boxdark xl:static xl:w-[350px] border-l border-stroke dark:border-strokedark shadow-lg xl:shadow-none flex flex-col'>
                     <UserInfo handleToggleUserInfo={() => setUserInfoOpen(false)} participant={otherParticipant} />
                 </div>
             )}
