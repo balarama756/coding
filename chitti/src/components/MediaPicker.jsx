@@ -1,8 +1,9 @@
 import { PaperPlaneTilt, X } from '@phosphor-icons/react';
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { ToggleMediaModal } from '../redux/slices/app';
 import FileDropZone from './FileDropZone';
+import { getSocket } from '../utils/socket';
 
 export default function MediaPicker() {
 
@@ -10,6 +11,10 @@ export default function MediaPicker() {
     const dispatch = useDispatch();
 
     const { media } = useSelector((state) => state.app.modals);
+    const { user } = useSelector((state) => state.auth);
+    const { activeConversation } = useSelector((state) => state.conversation);
+    const [file, setFile] = useState(null);
+    const [inputValue, setInputValue] = useState('');
 
     useEffect(() => {
         const keyHandler = ({ keyCode }) => {
@@ -25,6 +30,28 @@ export default function MediaPicker() {
         return () => document.removeEventListener('keydown', keyHandler);
     });
 
+    const handleSendMedia = () => {
+        if (!activeConversation || !user || !file) return;
+        const socket = getSocket();
+        if (socket) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = () => {
+                socket.emit('new-message', {
+                    conversationId: activeConversation._id,
+                    message: { 
+                        author: user._id, 
+                        type: 'Media', 
+                        content: inputValue.trim(), 
+                        file: reader.result 
+                    }
+                });
+            }
+        }
+        dispatch(ToggleMediaModal(false));
+        setFile(null);
+        setInputValue('');
+    };
 
     return (
         <div
@@ -51,10 +78,10 @@ export default function MediaPicker() {
                 </div>
 
                 {/* FileDropzone  */}
-                <FileDropZone />
+                <FileDropZone onFileAdd={(f) => setFile(f)} />
                 <div className='flex flex-row items-center space-x-2 justify-between mt-4'>
-                    <input type='text' className='border rounded-lg hover:border-primary outline-none w-full p-2 border-stroke dark:border-strokedark bg-transparent dark:bg-form-input' placeholder='Type your message....' />
-                    <button className='p-2.5 border border-primary flex items-center justify-center rounded-lg bg-primary hover:bg-opacity-90 text-white'>
+                    <input type='text' value={inputValue} onChange={(e) => setInputValue(e.target.value)} className='border rounded-lg hover:border-primary outline-none w-full p-2 border-stroke dark:border-strokedark bg-transparent dark:bg-form-input' placeholder='Type your caption....' />
+                    <button onClick={handleSendMedia} className='p-2.5 border border-primary flex items-center justify-center rounded-lg bg-primary hover:bg-opacity-90 text-white'>
                         <PaperPlaneTilt size={20} weight='bold' />
                     </button>
                 </div>

@@ -22,6 +22,7 @@ export default function Inbox() {
     const { activeConversation } = useSelector((state) => state.conversation);
     const { messages, typingUsers, pinnedMessages } = useSelector((state) => state.message);
     const { user } = useSelector((state) => state.auth);
+    const { blockedUsers } = useSelector((state) => state.conversation);
 
     const [userInfoOpen, setUserInfoOpen] = useState(false);
     const [videoCall, setVideoCall] = useState(false);
@@ -42,6 +43,7 @@ export default function Inbox() {
     const otherParticipant = !isGroup
         ? activeConversation?.participants?.find(p => p._id !== user?._id)
         : null;
+    const isBlocked = otherParticipant ? blockedUsers.includes(otherParticipant._id) : false;
     const isTyping = typingUsers[activeConversation?._id];
 
     const formatLastSeen = (dateStr) => {
@@ -254,15 +256,15 @@ export default function Inbox() {
                         <button className='sm:hidden mr-1' onClick={() => dispatch(setActiveConversation(null))}>
                             <ArrowLeft size={22} />
                         </button>
-                    <div className='flex items-center cursor-pointer' onClick={() => setUserInfoOpen(p => !p)}>
-                        <div className='mr-4.5 h-13 w-full max-w-13 overflow-hidden rounded-full'>
-                            <img src={getDisplayAvatar()} alt='avatar' className='h-full w-full object-cover object-center' />
+                        <div className='flex items-center cursor-pointer' onClick={() => setUserInfoOpen(p => !p)}>
+                            <div className='mr-4.5 h-13 w-full max-w-13 overflow-hidden rounded-full'>
+                                <img src={getDisplayAvatar()} alt='avatar' className='h-full w-full object-cover object-center' />
+                            </div>
+                            <div>
+                                <h5 className='font-medium text-black dark:text-white'>{getDisplayName()}</h5>
+                                <p className='text-sm'>{getStatusLine()}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5 className='font-medium text-black dark:text-white'>{getDisplayName()}</h5>
-                            <p className='text-sm'>{getStatusLine()}</p>
-                        </div>
-                    </div>
                     </div>
 
                     <div className='flex flex-row items-center space-x-4'>
@@ -374,33 +376,39 @@ export default function Inbox() {
                 )}
 
                 {/* Input */}
-                <div className='sticky bottom-0 border-t border-stroke bg-white px-6 py-5 dark:border-strokedark dark:bg-boxdark'>
-                    <form className='flex items-center justify-between space-x-4.5' onSubmit={handleSendMessage}>
-                        <div className='relative w-full'>
-                            <input
-                                type='text'
-                                placeholder='Type something here'
-                                value={inputValue}
-                                onChange={handleTyping}
-                                className='h-13 w-full rounded-md border border-stroke bg-gray pl-5 pr-19 text-black placeholder-body outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark-2 dark:text-white'
-                            />
-                            <div className='absolute right-5 top-1/2 -translate-y-1/2 items-center justify-end space-x-4'>
-                                <button type='button' onClick={() => dispatch(ToggleAudioModal(true))} className='hover:text-primary'>
-                                    <Microphone size={20} weight='bold' />
-                                </button>
-                                <button type='button' className='hover:text-primary'><Attachment /></button>
-                                <button type='button' onClick={(e) => { e.preventDefault(); setGifOpen(p => !p); }}>
-                                    <Gif size={20} />
-                                </button>
-                                <button type='button' className='hover:text-primary'><EmojiPicker /></button>
+                {isBlocked ? (
+                    <div className='sticky bottom-0 border-t border-stroke bg-gray-50 px-6 py-5 dark:border-strokedark dark:bg-boxdark-2 flex items-center justify-center'>
+                        <p className='text-danger text-sm font-medium'>You blocked this contact. Unblock to send a message.</p>
+                    </div>
+                ) : (
+                    <div className='sticky bottom-0 border-t border-stroke bg-white px-6 py-5 dark:border-strokedark dark:bg-boxdark'>
+                        <form className='flex items-center justify-between space-x-4.5' onSubmit={handleSendMessage}>
+                            <div className='relative w-full'>
+                                <input
+                                    type='text'
+                                    placeholder='Type something here'
+                                    value={inputValue}
+                                    onChange={handleTyping}
+                                    className='h-13 w-full rounded-md border border-stroke bg-gray pl-5 pr-19 text-black placeholder-body outline-none focus:border-primary dark:border-strokedark dark:bg-boxdark-2 dark:text-white'
+                                />
+                                <div className='absolute right-5 top-1/2 -translate-y-1/2 flex flex-row items-center justify-end space-x-4'>
+                                    <button type='button' onClick={() => dispatch(ToggleAudioModal(true))} className='text-[#98A6AD] hover:text-body'>
+                                        <Microphone size={20} weight='bold' />
+                                    </button>
+                                    <Attachment />
+                                    <button type='button' onClick={(e) => { e.preventDefault(); setGifOpen(p => !p); }} className='text-[#98A6AD] hover:text-body'>
+                                        <Gif size={20} weight='bold' />
+                                    </button>
+                                    <EmojiPicker onSelect={(emoji) => setInputValue(prev => prev + emoji)} />
+                                </div>
                             </div>
-                        </div>
-                        <button type='submit' className='flex items-center justify-center h-13 max-w-13 w-full rounded-md bg-primary text-white hover:bg-opacity-90'>
-                            <PaperPlaneTilt size={20} weight='bold' />
-                        </button>
-                    </form>
-                    {gifOpen && <Giphy />}
-                </div>
+                            <button type='submit' className='flex items-center justify-center h-13 max-w-13 w-full rounded-md bg-primary text-white hover:bg-opacity-90'>
+                                <PaperPlaneTilt size={20} weight='bold' />
+                            </button>
+                        </form>
+                        {gifOpen && <Giphy />}
+                    </div>
+                )}
             </div>
 
             {/* Forward modal */}
@@ -412,11 +420,27 @@ export default function Inbox() {
                 />
             )}
 
-            {videoCall && <VideoRoom open={videoCall} handleClose={() => setVideoCall(false)} />}
-            {audioCall && <AudioRoom open={audioCall} handleClose={() => setAudioCall(false)} />}
+            {videoCall && <VideoRoom 
+                open={videoCall} 
+                handleClose={() => setVideoCall(false)} 
+                currentUser={user}
+                otherUser={otherParticipant}
+                isGroup={isGroup}
+                groupName={activeConversation?.groupName}
+                groupAvatar={activeConversation?.groupAvatar}
+            />}
+            {audioCall && <AudioRoom 
+                open={audioCall} 
+                handleClose={() => setAudioCall(false)} 
+                currentUser={user}
+                otherUser={otherParticipant}
+                isGroup={isGroup}
+                groupName={activeConversation?.groupName}
+                groupAvatar={activeConversation?.groupAvatar}
+            />}
             {userInfoOpen && (
                 <div className='absolute right-0 top-0 bottom-0 z-50 w-full sm:w-80 bg-white dark:bg-boxdark xl:static xl:w-[350px] border-l border-stroke dark:border-strokedark shadow-lg xl:shadow-none flex flex-col'>
-                    <UserInfo handleToggleUserInfo={() => setUserInfoOpen(false)} participant={otherParticipant} />
+                    <UserInfo handleToggleUserInfo={() => setUserInfoOpen(false)} participant={otherParticipant} isGroup={isGroup} />
                 </div>
             )}
         </>

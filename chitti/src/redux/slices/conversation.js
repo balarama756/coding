@@ -6,6 +6,7 @@ const initialState = {
     loading: false,
     error: null,
     unreadCounts: {},
+    blockedUsers: [],
 };
 
 const conversationSlice = createSlice({
@@ -68,6 +69,14 @@ const conversationSlice = createSlice({
             state.error = action.payload;
             state.loading = false;
         },
+        toggleBlockUser(state, action) {
+            const userId = action.payload;
+            if (state.blockedUsers.includes(userId)) {
+                state.blockedUsers = state.blockedUsers.filter(id => id !== userId);
+            } else {
+                state.blockedUsers.push(userId);
+            }
+        },
     },
 });
 
@@ -81,6 +90,7 @@ export const {
     incrementUnread,
     setLoading,
     setError,
+    toggleBlockUser,
 } = conversationSlice.actions;
 
 export default conversationSlice.reducer;

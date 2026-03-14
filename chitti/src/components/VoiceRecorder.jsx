@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { ToggleAudioModal } from '../redux/slices/app';
-
+import { getSocket } from '../utils/socket';
 import { AudioRecorder, useAudioRecorder } from 'react-audio-voice-recorder';
 
 export default function VoiceRecorder() {
@@ -10,6 +10,9 @@ export default function VoiceRecorder() {
     const dispatch = useDispatch();
 
     const { audio } = useSelector((state) => state.app.modals);
+    const { user } = useSelector((state) => state.auth);
+    const { activeConversation } = useSelector((state) => state.conversation);
+    const [audioBlob, setAudioBlob] = useState(null);
 
     useEffect(() => {
         const keyHandler = ({ keyCode }) => {
@@ -31,15 +34,47 @@ export default function VoiceRecorder() {
     }, (err) => console.log(err)); // onNotAllowedOrNotFound
 
     const addAudioElement = (blob) => {
+        setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
 
-        const audio = document.createElement('audio');
-        audio.src = url;
-        audio.controls = true;
+        const audioEl = document.createElement('audio');
+        audioEl.src = url;
+        audioEl.controls = true;
 
         const targetContainer = document.getElementById('audio-container');
-        targetContainer.appendChild(audio);
+        // Clear previous recordings
+        const previousAudio = targetContainer.querySelector('audio');
+        if (previousAudio) {
+            targetContainer.removeChild(previousAudio);
+        }
+        targetContainer.insertBefore(audioEl, targetContainer.firstChild);
+    }
 
+    const handleSendAudio = () => {
+        if (!audioBlob || !activeConversation || !user) return;
+        const socket = getSocket();
+        
+        // In a real app we'd upload the blob to cloud storage (e.g. AWS S3 / Cloudinary) and get a URL first
+        // For now, we simulate sending by converting to base64 or emitting directly (server must handle binary)
+        if (socket) {
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                socket.emit('new-message', {
+                    conversationId: activeConversation._id,
+                    message: {
+                        author: user?._id,
+                        content: 'Audio Message',
+                        file: base64data,
+                        type: 'Audio',
+                    }
+                });
+            }
+        }
+        
+        dispatch(ToggleAudioModal(false));
+        setAudioBlob(null);
     }
 
     return (
@@ -61,7 +96,7 @@ export default function VoiceRecorder() {
                     />
 
                     <div className='flex flex-row items-center space-x-4 w-full mt-8'>
-                        <button className='w-full bg-primary rounded-lg p-2 text-white hover:bg-opacity-90'>Send</button>
+                        <button onClick={handleSendAudio} className='w-full bg-primary rounded-lg p-2 text-white hover:bg-opacity-90'>Send</button>
                         <button onClick={() => {
                             dispatch(ToggleAudioModal(false));
                         }} className='w-full border bg-transparent border-red rounded-lg p-2 text-red'>Cancel</button>

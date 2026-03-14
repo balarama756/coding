@@ -1,7 +1,8 @@
 import { PaperPlaneTilt, X } from '@phosphor-icons/react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToggleGifModal } from '../redux/slices/app';
+import { getSocket } from '../utils/socket';
 
 export default function GifModal() {
 
@@ -9,7 +10,10 @@ export default function GifModal() {
   const dispatch = useDispatch();
 
   const { gif } = useSelector((state) => state.app.modals);
-  const {selectedGifUrl } = useSelector((state) => state.app);
+  const { selectedGifUrl } = useSelector((state) => state.app);
+  const { user } = useSelector((state) => state.auth);
+  const { activeConversation } = useSelector((state) => state.conversation);
+  const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
     const keyHandler = ({keyCode}) => {
@@ -29,6 +33,24 @@ export default function GifModal() {
 
     return () => document.removeEventListener('keydown', keyHandler);
 })
+
+  const handleSendGif = () => {
+    if(!activeConversation || !user) return;
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('new-message', {
+        conversationId: activeConversation._id,
+        message: {
+          author: user?._id,
+          content: inputValue.trim(),
+          file: selectedGifUrl,
+          type: 'Media',
+        }
+      });
+    }
+    dispatch(ToggleGifModal({ value: false, url: '' }));
+    setInputValue('');
+  };
 
   return (
     <div
@@ -60,8 +82,14 @@ export default function GifModal() {
         />
 
         <div className='flex flex-row items-center space-x-2 justify-between mt-4'>
-          <input type='text' className='border rounded-lg hover:border-primary outline-none w-full p-2 border-stroke dark:border-strokedark bg-transparent dark:bg-form-input' placeholder='Type your message....' />
-          <button className='p-2.5 border border-primary flex items-center justify-center rounded-lg bg-primary hover:bg-opacity-90 text-white'>
+          <input 
+            type='text' 
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className='border rounded-lg hover:border-primary outline-none w-full p-2 border-stroke dark:border-strokedark bg-transparent dark:bg-form-input' 
+            placeholder='Type your message....' 
+          />
+          <button onClick={handleSendGif} className='p-2.5 border border-primary flex items-center justify-center rounded-lg bg-primary hover:bg-opacity-90 text-white'>
             <PaperPlaneTilt size={20} weight='bold' />
           </button>
         </div>

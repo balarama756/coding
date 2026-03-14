@@ -1,7 +1,12 @@
-import { Chat, Clock, DotsThreeVertical, VideoCamera, X } from '@phosphor-icons/react'
+import { Chat, Clock, DotsThreeVertical, VideoCamera, X, Prohibit } from '@phosphor-icons/react'
 import React from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { toggleBlockUser } from '../../redux/slices/conversation'
 
-export default function UserInfo({ handleToggleUserInfo, participant }) {
+export default function UserInfo({ handleToggleUserInfo, participant, isGroup }) {
+    const dispatch = useDispatch();
+    const { blockedUsers } = useSelector((state) => state.conversation);
+    const isBlocked = participant ? blockedUsers.includes(participant._id) : false;
     return (
         <div className='border-l flex flex-col h-full border-stroke dark:border-strokedark'>
             <div className='sticky border-b border-stroke dark:border-strokedark flex flex-row items-center justify-between w-full px-6 py-7.5'>
@@ -36,18 +41,32 @@ export default function UserInfo({ handleToggleUserInfo, participant }) {
                 )}
             </div>
 
-            <div className='px-6 flex flex-row space-x-2'>
-                <button className='w-full border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center'>
-                    <Chat size={20} className='mr-3' />
-                    Message
-                </button>
-                <button className='w-full border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center'>
-                    <VideoCamera size={20} className='mr-3' />
-                    Huddle
-                </button>
-                <button className='border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center'>
-                    <DotsThreeVertical size={20} />
-                </button>
+            <div className='px-6 flex flex-col space-y-4'>
+                <div className='flex flex-row space-x-2'>
+                    <button className='w-full border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center hover:bg-gray-2 dark:hover:bg-boxdark-2'>
+                        <Chat size={20} className='mr-3' />
+                        Message
+                    </button>
+                    <button className='w-full border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center hover:bg-gray-2 dark:hover:bg-boxdark-2'>
+                        <VideoCamera size={20} className='mr-3' />
+                        Huddle
+                    </button>
+                    <button className='border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center hover:bg-gray-2 dark:hover:bg-boxdark-2'>
+                        <DotsThreeVertical size={20} />
+                    </button>
+                </div>
+
+                {!isGroup && participant && (
+                    <button 
+                        onClick={() => dispatch(toggleBlockUser(participant._id))}
+                        className={`w-full border border-stroke dark:border-strokedark p-2 rounded-md flex flex-row items-center justify-center hover:bg-gray-2 dark:hover:bg-boxdark-2 transition-colors ${
+                            isBlocked ? 'text-black dark:text-white' : 'text-danger'
+                        }`}
+                    >
+                        <Prohibit size={20} className='mr-3' />
+                        {isBlocked ? 'Unblock User' : 'Block User'}
+                    </button>
+                )}
             </div>
         </div>
     )

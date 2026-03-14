@@ -1,9 +1,7 @@
 import { Microphone, MicrophoneSlash, PhoneDisconnect, VideoCamera, VideoCameraSlash } from '@phosphor-icons/react'
 import React, { useState } from 'react'
-import User01 from '../images/user/user-02.png'
-import User02 from '../images/user/user-02.png'
 
-export default function VideoRoom({ open, handleClose }) {
+export default function VideoRoom({ open, handleClose, currentUser, otherUser, groupName, groupAvatar, isGroup }) {
 
     const [muteAudio, setMuteAudio] = useState(false);
     const [muteVideo, setMuteVideo] = useState(false);
@@ -15,6 +13,12 @@ export default function VideoRoom({ open, handleClose }) {
         setMuteVideo((p) => !p);
     }
 
+    const myAvatar = currentUser?.avatar || `https://ui-avatars.com/api/?name=${currentUser?.name || 'You'}`;
+    const theirName = isGroup ? groupName : (otherUser?.name || 'Unknown');
+    const theirAvatar = isGroup 
+        ? (groupAvatar || `https://ui-avatars.com/api/?name=${groupName}&background=6366f1&color=fff`)
+        : (otherUser?.avatar || `https://ui-avatars.com/api/?name=${otherUser?.name || 'Unknown'}`);
+
     return (
         <div className={`fixed left-0 top-0 z-999999 flex h-full min-h-screen w-full items-center justify-center bg-black/90 px-4 py-5 ${open ? 'block' : 'hidden'}`}>
             <div className='w-full max-w-142.5 rounded-lg bg-white dark:bg-boxdark md:py-8 px-8 py-12 '>
@@ -22,12 +26,12 @@ export default function VideoRoom({ open, handleClose }) {
                 <div className='flex flex-col space-y-6'>
 
                     {/* Video feed Grid */}
-                     
-                     <div className='grid grid-cols-2 gap-4 h-50 mb-4'>
+
+                    <div className='grid grid-cols-2 gap-4 h-50 mb-4'>
                         {/* Video Feed 1 */}
                         <div className='relative h-full w-full bg-gray dark:bg-boxdark-2 rounded-md flex items-center justify-center'>
-                            <div className='space-y-2'>
-                                <img src={User01} alt='' className='h-20 w-20 rounded-full object-center object-cover' />
+                            <div className='space-y-2 flex flex-col items-center'>
+                                <img src={myAvatar} alt='You' className='h-20 w-20 rounded-full object-center object-cover' />
                                 <div className='font-medium text-sm text-center'>You</div>
                             </div>
 
@@ -40,9 +44,9 @@ export default function VideoRoom({ open, handleClose }) {
                         {/* Video Feed 2 */}
 
                         <div className='relative h-full w-full bg-gray dark:bg-boxdark-2 rounded-md flex items-center justify-center'>
-                            <div className='space-y-2'>
-                                <img src={User02} alt='' className='h-20 w-20 rounded-full object-center object-cover' />
-                                <div className='font-medium text-sm text-center'>Keerthi</div>
+                            <div className='space-y-2 flex flex-col items-center'>
+                                <img src={theirAvatar} alt={theirName} className='h-20 w-20 rounded-full object-center object-cover' />
+                                <div className='font-medium text-sm text-center truncate max-w-xs px-2'>{theirName}</div>
                             </div>
 
                             <div className='absolute top-3 right-4'>
@@ -50,7 +54,7 @@ export default function VideoRoom({ open, handleClose }) {
                             </div>
 
                         </div>
-                     </div>
+                    </div>
 
 
                     {/* Call controls  */}

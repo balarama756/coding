@@ -6,6 +6,7 @@ export default function FileDropZone({
     acceptedFiles = 'image/*,video/*',  
     maxFileSize = 16 * 1024 * 1024,
     url = '/file/post',
+    onFileAdd,
 }) {
 
     const dropzoneRef = useRef(null);
@@ -18,8 +19,15 @@ export default function FileDropZone({
             dropzoneRef.current = new Dropzone(formRef.current, {
                 url,
                 acceptedFiles,
-                maxFileSize: maxFileSize / (1024 * 1024), // Dropzone expects the max file size in MB  
+                maxFilesize: maxFileSize / (1024 * 1024), // Dropzone expects the max file size in MB  
+                autoProcessQueue: false,
+                addRemoveLinks: true,
             });
+
+            if(onFileAdd) {
+                dropzoneRef.current.on('addedfile', (file) => onFileAdd(file));
+                dropzoneRef.current.on('removedfile', () => onFileAdd(null));
+            }
         }
 
         return () => {

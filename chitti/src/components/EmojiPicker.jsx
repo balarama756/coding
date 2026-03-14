@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 
-export default function EmojiPicker() {
+export default function EmojiPicker({ onSelect }) {
     
     const colorMode = JSON.parse(window.localStorage.getItem('color-theme'));
     
@@ -13,15 +13,12 @@ export default function EmojiPicker() {
 
     const pickerRef = useRef(null);
     const buttonRef = useRef(null);
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (pickerRef.current &&
                 !pickerRef.current.contains(event.target) &&
                 buttonRef.current &&
                 !buttonRef.current.contains(event.target)) {
-
-            } {
                 setPickerOpen(false);
             }
         }
@@ -47,8 +44,9 @@ export default function EmojiPicker() {
 
             {pickerOpen && (
                 <div ref={pickerRef} className='absolute z-40 -top-115 right-0'>
-                    <Picker theme={colorMode} data={data} onEmojiSelect={console.log} />
-
+                    <Picker theme={colorMode} data={data} onEmojiSelect={(emoji) => {
+                        if (onSelect) onSelect(emoji.native);
+                    }} />
                 </div>
             )}
 
